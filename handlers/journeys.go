@@ -5,11 +5,15 @@ import (
 	dto "backend-journey/dto/result"
 	"backend-journey/models"
 	"backend-journey/repositories"
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
@@ -45,10 +49,24 @@ func (h *handlerJourney) CreateJourney(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary ...
+	resp, err := cld.Upload.Upload(ctx, filename, uploader.UploadParams{Folder: "Waysbean"})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	journey := models.Journey{
 		UserId:      userId,
 		Title:       request.Title,
-		Image:       filename,
+		Image:       resp.SecureURL,
 		Description: request.Descriptions,
 	}
 
